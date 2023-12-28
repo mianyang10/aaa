@@ -1,51 +1,105 @@
-# Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022)
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+import matplotlib.pyplot as plt
+from PIL import Image, ImageEnhance, ImageFilter
+import numpy as np
 
-import streamlit as st
-from streamlit.logger import get_logger
+# 打开图像
+image = Image.open('D:/picture/9.jpg')
+# 原始图像
+plt.subplot(1, 4, 1)
+plt.imshow(image)
+plt.title('Original Image')
 
-LOGGER = get_logger(__name__)
+# 图像增强
+enhancer = ImageEnhance.Contrast(image)
+enhanced_image = enhancer.enhance(2.0)  # 增强对比度
+
+# 增强后的图像
+plt.subplot(1, 4, 2)
+plt.imshow(enhanced_image)
+plt.title('Enhanced Image')
+
+# 去除背景噪点
+filtered_image = enhanced_image.filter(ImageFilter.MedianFilter(5))
+
+# 去噪后的图像
+plt.subplot(1, 4, 3)
+plt.imshow(filtered_image)
+plt.title('Filtered Image')
+
+# 伽马变换和二值化处理
+gamma = 0.5  # 伽马值
+threshold = 128  # 阈值
+
+# 转换为灰度图像
+gray_image = filtered_image.convert('L')
+
+# 将图像转换为NumPy数组
+image_array = np.array(gray_image)
+
+# 应用伽马变换
+gamma_corrected_array = 255 * (image_array / 255) ** gamma
+
+# 将NumPy数组转换回图像
+gamma_corrected_image = Image.fromarray(gamma_corrected_array.astype(np.uint8))
+
+# 应用二值化处理
+binary_image = gamma_corrected_image.point(lambda x: 255 if x > threshold else 0, mode='1')
+
+# 伽马变换和二值化处理后的图像
+plt.subplot(1, 4, 4)
+plt.imshow(binary_image, cmap='gray')
+plt.title('Gamma and Binary Image')
+
+# 显示图像
+plt.tight_layout()
+plt.show()
+
+# 保存伽马变换和二值化处理后的图像
+binary_image.save("gamma_binary_image.jpg")
+
+import cv2  
+import numpy as np  
+import matplotlib.pyplot as plt 
+
+img = cv2.imread(r'gamma_binary_image.jpg')  
+  
+# 定义一个3x3的卷积核  
+kernel = np.ones((5,5),np.uint8)  
+  
+# 膨胀和腐蚀函数：  
+img_erosion = cv2.erode(img, kernel, iterations=1)  
+plt.imshow(img_erosion)  
+plt.show()  
+  
+img_dilation = cv2.dilate(img, kernel, iterations=1)  
+plt.imshow(img_dilation)  
+plt.show()  
+  
+er2 = cv2.erode(img_dilation, kernel, iterations=1)  
+plt.imshow(er2)  
+plt.show()  
+  
+
+dila = cv2.dilate(img_erosion, kernel, iterations=1)  
+plt.imshow(dila)  
+plt.show()
 
 
-def run():
-    st.set_page_config(
-        page_title="Hello",
-        page_icon="👋",
-    )
+import pytesseract
+from PIL import Image
 
-    st.write("# Welcome to Streamlit! 👋")
+def OCR_demo():
+    # 导入OCR安装路径，如果设置了系统环境，就可以不用设置了
+    # pytesseract.pytesseract.tesseract_cmd = r"D:\Program Files\Tesseract-OCR\tesseract.exe"
+    # 打开要识别的图片
 
-    st.sidebar.success("Select a demo above.")
+#     image = Image.open('D:/picture/b.jpg')
+    image =img_erosion
+    # 使用pytesseract调用image_to_string方法进行识别，传入要识别的图片，lang='chi_sim'是设置为中文识别，
+    text = pytesseract.image_to_string(image, lang='chi_sim')
 
-    st.markdown(
-        """
-        Streamlit is an open-source app framework built specifically for
-        Machine Learning and Data Science projects.
-        **👈 Select a demo from the sidebar** to see some examples
-        of what Streamlit can do!
-        ### Want to learn more?
-        - Check out [streamlit.io](https://streamlit.io)
-        - Jump into our [documentation](https://docs.streamlit.io)
-        - Ask a question in our [community
-          forums](https://discuss.streamlit.io)
-        ### See more complex demos
-        - Use a neural net to [analyze the Udacity Self-driving Car Image
-          Dataset](https://github.com/streamlit/demo-self-driving)
-        - Explore a [New York City rideshare dataset](https://github.com/streamlit/demo-uber-nyc-pickups)
-    """
-    )
+    print(text)
 
 
-if __name__ == "__main__":
-    run()
+if __name__ == '__main__':
+    OCR_demo()
